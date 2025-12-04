@@ -270,7 +270,7 @@ def ver_mensajes(usuario_actual):
 
 def escribir_nuevo(autor):
     print("\n--- NUEVO MENSAJE PÚBLICO ---")
-    
+    msg = input("Mensaje: ")
     
     if not es_etico(msg):
         print("\n[BLOQUEADO] El sistema detectó lenguaje inapropiado.")
