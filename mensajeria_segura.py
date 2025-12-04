@@ -240,7 +240,7 @@ def menu_principal(usuario_actual):
         print("3. Enviar Mensaje Privado")
         print("4. Cerrar Sesión")
         
-        opcion = input("\nOpción: ")
+        
         
         if opcion == "1":
             ver_mensajes(usuario_actual)
