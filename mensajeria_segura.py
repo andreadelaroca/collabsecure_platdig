@@ -226,4 +226,3 @@ def escribir_nuevo(autor):
 # --- EJECUCIÓN ---
 if __name__ == "__main__":
     init_db() # Crear DB y tablas al arrancar
-    menu_inicio()
