@@ -44,7 +44,8 @@ def init_db():
 
 # --- 2. FUNCIONES DE SEGURIDAD Y ÉTICA ---
 
-
+def limpiar_pantalla():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def hash_password(password):
     """SHA-256 para proteger contraseñas."""
