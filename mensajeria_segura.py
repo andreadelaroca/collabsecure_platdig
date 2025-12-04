@@ -101,6 +101,7 @@ def registrar_usuario():
         print("Aviso de Privacidad: Sus datos han sido cifrados.")
     except sqlite3.IntegrityError:
         print("\n[ERROR] El nombre de usuario ya existe.")
+        print("Por favor ingresa un usuario valido")
     finally:
         conn.close()
         time.sleep(2)
