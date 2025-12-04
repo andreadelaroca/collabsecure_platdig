@@ -27,18 +27,12 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
             author TEXT,
-            encrypted_content TEXT,
-            recipient TEXT
+            encrypted_content TEXT
         )
     ''')
-
-    # Agregar columna recipient si no existe (para compatibilidad)
-    try:
-        cursor.execute("ALTER TABLE messages ADD COLUMN recipient TEXT")
-    except:
-        pass
     
     # Crear usuario Admin por defecto si no existe
+    # Pass: 1234
     admin_pass = hashlib.sha256("1234".encode()).hexdigest()
     try:
         cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ("admin", admin_pass))
@@ -70,7 +64,7 @@ def desencriptar_mensaje(texto_hex):
 
 def es_etico(texto):
     """Filtro de contenido ofensivo."""
-    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear","suicidio", "muerte"]
+    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear"]
     texto_lower = texto.lower()
     for palabra in palabras_prohibidas:
         if palabra in texto_lower:
@@ -91,7 +85,7 @@ def registrar_usuario():
 
     nuevo_pass = input("Ingrese contraseña: ").strip()
     if len(nuevo_pass) < 4:
-        print("¡Inseguro! La contraseña debe tener al menos 4 caracteres.")
+        print("¡Inseguro! La contraseña debe tener al menos 4 caracteres.") # Medida de seguridad básica
         time.sleep(2)
         return
 
@@ -107,7 +101,6 @@ def registrar_usuario():
         print("Aviso de Privacidad: Sus datos han sido cifrados.")
     except sqlite3.IntegrityError:
         print("\n[ERROR] El nombre de usuario ya existe.")
-        print("Por favor ingresa un usuario valido")
     finally:
         conn.close()
         time.sleep(2)
@@ -133,67 +126,20 @@ def guardar_mensaje(autor, contenido):
     fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     contenido_seguro = encriptar_mensaje(contenido)
     
-    cursor.execute("INSERT INTO messages (timestamp, author, encrypted_content, recipient) VALUES (?, ?, ?, NULL)", 
+    cursor.execute("INSERT INTO messages (timestamp, author, encrypted_content) VALUES (?, ?, ?)", 
                    (fecha, autor, contenido_seguro))
     conn.commit()
     conn.close()
 
-def obtener_mensajes_filtrados(usuario_actual):
+def obtener_mensajes():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT timestamp, author, encrypted_content, recipient 
-        FROM messages
-        WHERE recipient IS NULL 
-           OR recipient = ? 
-           OR author = ?
-    """, (usuario_actual, usuario_actual))
-
+    cursor.execute("SELECT timestamp, author, encrypted_content FROM messages")
     mensajes = cursor.fetchall()
     conn.close()
     return mensajes
 
-# --- 4. NUEVA FUNCIÓN PARA MENSAJES PRIVADOS ---
-
-def enviar_mensaje_privado(autor):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    print("\n--- ENVIAR MENSAJE PRIVADO ---")
-    destino = input("Enviar a (usuario destino): ").strip()
-
-    # Verificar si el usuario existe
-    cursor.execute("SELECT username FROM users WHERE username = ?", (destino,))
-    if cursor.fetchone() is None:
-        print("\n[ERROR] El usuario no existe.")
-        conn.close()
-        time.sleep(2)
-        return
-
-    msg = input("Mensaje: ")
-
-    if not es_etico(msg):
-        print("\n[BLOQUEADO] El sistema detectó lenguaje inapropiado.")
-        conn.close()
-        time.sleep(2)
-        return
-
-    fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    contenido_seguro = encriptar_mensaje(msg)
-
-    cursor.execute("""
-        INSERT INTO messages (timestamp, author, encrypted_content, recipient)
-        VALUES (?, ?, ?, ?)
-    """, (fecha, autor, contenido_seguro, destino))
-
-    conn.commit()
-    conn.close()
-
-    print("\nMensaje enviado y cifrado correctamente.")
-    time.sleep(1)
-
-# --- 5. INTERFAZ DE USUARIO ---
+# --- 4. INTERFAZ DE USUARIO ---
 
 def menu_inicio():
     while True:
@@ -237,40 +183,35 @@ def menu_principal(usuario_actual):
         print(f"Usuario: {usuario_actual} | Estado: Conectado")
         print("-" * 40)
         print("1. Leer Mensajes (Desencriptar DB)")
-        print("2. Escribir Mensaje Público")
-        print("3. Enviar Mensaje Privado")
-        print("4. Cerrar Sesión")
+        print("2. Escribir Mensaje")
+        print("3. Cerrar Sesión")
         
         opcion = input("\nOpción: ")
         
         if opcion == "1":
-            ver_mensajes(usuario_actual)
+            ver_mensajes()
         elif opcion == "2":
             escribir_nuevo(usuario_actual)
         elif opcion == "3":
-            enviar_mensaje_privado(usuario_actual)
-        elif opcion == "4":
             break
 
-def ver_mensajes(usuario_actual):
+def ver_mensajes():
     limpiar_pantalla()
-    mensajes = obtener_mensajes_filtrados(usuario_actual)
-
-    print(f"{'FECHA':<18} | {'DE':<10} | {'PARA':<10} | {'MENSAJE'}")
-    print("-" * 80)
+    mensajes = obtener_mensajes()
+    print(f"{'FECHA':<18} | {'AUTOR':<10} | {'MENSAJE'}")
+    print("-" * 60)
     
     if not mensajes:
-        print("No hay mensajes disponibles.")
-
-    for fecha, autor, contenido_hex, destino in mensajes:
+        print("La base de datos está vacía.")
+    
+    for fecha, autor, contenido_hex in mensajes:
         msg_claro = desencriptar_mensaje(contenido_hex)
-        destino = destino if destino else "Público"
-        print(f"{fecha:<18} | {autor:<10} | {destino:<10} | {msg_claro}")
+        print(f"{fecha:<18} | {autor:<10} | {msg_claro}")
         
     input("\nPresione ENTER para volver...")
 
 def escribir_nuevo(autor):
-    print("\n--- NUEVO MENSAJE PÚBLICO ---")
+    print("\n--- NUEVO MENSAJE ---")
     msg = input("Mensaje: ")
     
     if not es_etico(msg):
@@ -284,5 +225,5 @@ def escribir_nuevo(autor):
 
 # --- EJECUCIÓN ---
 if __name__ == "__main__":
-    init_db()
+    init_db() # Crear DB y tablas al arrancar
     menu_inicio()
