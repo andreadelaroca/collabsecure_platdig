@@ -70,7 +70,7 @@ def desencriptar_mensaje(texto_hex):
 
 def es_etico(texto):
     """Filtro de contenido ofensivo."""
-    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear"]
+    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear","suicidio", "muerte"]
     texto_lower = texto.lower()
     for palabra in palabras_prohibidas:
         if palabra in texto_lower:
@@ -107,6 +107,7 @@ def registrar_usuario():
         print("Aviso de Privacidad: Sus datos han sido cifrados.")
     except sqlite3.IntegrityError:
         print("\n[ERROR] El nombre de usuario ya existe.")
+        print("Por favor ingresa un usuario valido")
     finally:
         conn.close()
         time.sleep(2)
