@@ -64,7 +64,7 @@ def desencriptar_mensaje(texto_hex):
 
 def es_etico(texto):
     """Filtro de contenido ofensivo."""
-    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear"]
+    palabras_prohibidas = ["idiota", "estupido", "muere", "tonto", "inutil", "hackear","suicidio", "muerte"]
     texto_lower = texto.lower()
     for palabra in palabras_prohibidas:
         if palabra in texto_lower:
